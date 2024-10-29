@@ -43,6 +43,25 @@ wss.on('connection', (ws) => {
   } catch (error) {
     console.error('Error al enviar mensaje de bienvenida:', error);
   }
+
+  // Enviar mensaje cada 5 segundos
+  const intervalId = setInterval(() => {
+    if (ws.readyState === WebSocket.OPEN) {
+      try {
+        ws.send(JSON.stringify({
+          user: 'Sistema',
+          message: 'Bienvenido al chat encriptado!'
+        }));
+      } catch (error) {
+        console.error('Error al enviar mensaje periódico:', error);
+      }
+    }
+  }, 5000);
+
+  // Limpiar el intervalo cuando el cliente se desconecta
+  ws.on('close', () => {
+    clearInterval(intervalId);
+  });
 });
 
 // Manejo de errores del servidor WebSocket
