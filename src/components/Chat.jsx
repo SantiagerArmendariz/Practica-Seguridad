@@ -2,13 +2,24 @@ import { useState, useEffect, useRef } from 'react';
 import CryptoJS from 'crypto-js';
 import PropTypes from 'prop-types';
 
+// Clave de encriptación para los mensajes
 const ENCRYPTION_KEY = 'my-secret-key-2024';
 
+/**
+ * Componente de chat que permite a los usuarios enviar y recibir mensajes en tiempo real.
+ * Los mensajes se encriptan antes de ser enviados y se desencriptan al ser recibidos.
+ *
+ * @param {Object} props - Propiedades del componente.
+ * @param {string} props.user - Nombre del usuario actual.
+ * @param {Function} props.onLogout - Función para cerrar sesión.
+ */
 function Chat({ user, onLogout }) {
+  // Estado para el mensaje actual y la lista de mensajes
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
-  const ws = useRef(null);
+  const ws = useRef(null); // Referencia al WebSocket
 
+  // Efecto para inicializar el WebSocket y manejar los eventos de mensajes
   useEffect(() => {
     ws.current = new WebSocket('ws://localhost:8080');
 
@@ -25,9 +36,11 @@ function Chat({ user, onLogout }) {
         decryptedMessage = bytes.toString(CryptoJS.enc.Utf8);
       }
 
+      // Actualizar la lista de mensajes con el nuevo mensaje desencriptado
       setMessages(prev => [...prev, { user: messageData.user, message: decryptedMessage }]);
     };
 
+    // Limpiar el WebSocket al desmontar el componente
     return () => {
       if (ws.current) {
         ws.current.close();
@@ -35,11 +48,12 @@ function Chat({ user, onLogout }) {
     };
   }, []);
 
+  // Función para manejar el envío de mensajes
   const handleSendMessage = () => {
-    if (!message.trim()) return;
+    if (!message.trim()) return; // No enviar mensajes vacíos
     const encryptedMessage = CryptoJS.AES.encrypt(message, ENCRYPTION_KEY).toString();
     ws.current.send(JSON.stringify({ user, message: encryptedMessage }));
-    setMessage('');
+    setMessage(''); // Limpiar el campo de entrada de mensaje
   };
 
   return (
@@ -65,6 +79,7 @@ function Chat({ user, onLogout }) {
   );
 }
 
+// Definición de tipos para las propiedades del componente
 Chat.propTypes = {
   user: PropTypes.string.isRequired,
   onLogout: PropTypes.func.isRequired,
